@@ -6,7 +6,7 @@
 /*   By: buiterma <buiterma@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/08/23 16:00:11 by buiterma      #+#    #+#                 */
-/*   Updated: 2022/11/04 12:30:24 by jde-groo      ########   odam.nl         */
+/*   Updated: 2022/11/08 21:28:16 by buiterma      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,10 +137,11 @@ int				cleanup(t_token *token, int exit, bool exit_prog);
 void			free_program_data(void);
 
 //=========== Exec ============//
-bool			exec_func(size_t index);
-bool			exec_child(int index);
-void			ft_exec(size_t index);
-bool			exec(void);
+// bool			exec_func(size_t index);
+// bool			exec_child(int index);
+// void			ft_exec(size_t index);
+// bool			exec(void);
+bool			exec_init(void);
 bool			set_shlvl(void);
 
 #endif

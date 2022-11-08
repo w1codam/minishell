@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   exec.c                                             :+:    :+:            */
+/*   exec_old.c                                         :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: jde-groo <jde-groo@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/09/13 14:53:22 by jde-groo      #+#    #+#                 */
-/*   Updated: 2022/11/08 22:10:32 by buiterma      ########   odam.nl         */
+/*   Updated: 2022/11/08 22:04:47 by buiterma      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ static int	exec_builtin(int index)
 	return (127);
 }
 
-static void	ft_execve(size_t index)
+void	ft_exec(size_t index)
 {
 	if (index == 0 && g_shell.fd_in != STDIN_FILENO)
 	{
@@ -53,9 +53,39 @@ static void	ft_execve(size_t index)
 		exit(exec_builtin(index));
 	execve(g_shell.cmds[index].path, g_shell.cmds[index].args, normalize_env());
 	if (!access(g_shell.cmds[index].args[0], F_OK))
-		exit(error("minishell", g_shell.cmds[index].args[0], 
+		exit(error("minishell", g_shell.cmds[index].args[0], \
 			"Permission denied", 126));
 	exit(error("command not found", g_shell.cmds[index].args[0], NULL, 127));
+}
+
+bool	exec_child(int index)
+{
+	int		fd[2];
+	int	status;
+
+	if (!ft_pipe(fd))
+		return (false);
+	if (!ft_fork(&g_shell.pid))
+	{
+		close(fd[READ]);
+		close(fd[WRITE]);
+		return (false);
+	}
+	if (g_shell.pid == 0)
+	{
+		dup2(fd[WRITE], STDOUT_FILENO);
+		close(fd[WRITE]);
+		close(fd[READ]);
+		ft_exec(index);
+	}
+	else
+	{
+		wait(&status);
+		dup2(fd[READ], STDIN_FILENO);
+		close(fd[READ]);
+		close(fd[WRITE]);
+	}
+	return (true);
 }
 
 static bool	single_builtin(void)
@@ -64,63 +94,23 @@ static bool	single_builtin(void)
 	return (true);
 }
 
-static pid_t	exec(size_t i, int fd_in)
+bool	exec(void)
 {
-	int		fd[2];
-	pid_t	pid;
+	// int		status;
 
 	set_sigs_exec();
 	if (g_shell.cmd_n == 0)
-		return (0);
+		return (true);
 	if (g_shell.cmd_n == 1 && g_shell.cmds[0].path == NULL && \
 		!g_shell.cmds[0].invalid && single_builtin())
-		return (0);
-	if (!ft_pipe(fd))
-		return (0);
-	if (!ft_fork(&pid))
-	{
-		close(fd[READ]);
-		close(fd[WRITE]);
-		return (0);
-	}
-	if (pid == 0)
-	{
-		// dup2(fd[WRITE], STDOUT_FILENO);
-		close(fd[READ]);
-		ft_execve(i - 1);
-	}
-	// dup2(fd[READ], STDIN_FILENO);
-	close(fd_in);
-	close(fd[WRITE]);
-	if (i < g_shell.cmd_n)
-		pid = exec(i + 1, fd[READ]);
-	return (pid);
-}
-
-bool	exec_init(void)
-{
-	int		fd;
-	int		status;
-	size_t	i;
-	pid_t	pid;
-
-	i = 0;
-	fd = dup(STDIN_FILENO);
-	if (fd < 0)
+		return (true);
+	if (!ft_fork(&g_shell.pid))
 		return (false);
-	pid = exec(0, fd);
-	if (pid >= 0)
-	{
-		waitpid(pid, &status, 0);
-		if (WIFEXITED(status))
-			g_shell.exit_code = WEXITSTATUS(status);
-	}
-	else
-		g_shell.exit_code = 1;
-	while (i < g_shell.cmd_n)
-	{
-		wait(NULL);
-		i++;
-	}
+	if (g_shell.pid == 0 && !exec_func(0))
+		return (false);
+	// waitpid(g_shell.pid, &status, 0);
+	// if (WIFEXITED(status))
+	// 	g_shell.exit_code = WEXITSTATUS(status);
+	printf("end\n");
 	return (true);
 }
