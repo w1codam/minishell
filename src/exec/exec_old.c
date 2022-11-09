@@ -6,7 +6,7 @@
 /*   By: jde-groo <jde-groo@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/09/13 14:53:22 by jde-groo      #+#    #+#                 */
-/*   Updated: 2022/11/08 22:04:47 by buiterma      ########   odam.nl         */
+/*   Updated: 2022/11/09 10:17:03 by buiterma      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,6 @@ void	ft_exec(size_t index)
 bool	exec_child(int index)
 {
 	int		fd[2];
-	int	status;
 
 	if (!ft_pipe(fd))
 		return (false);

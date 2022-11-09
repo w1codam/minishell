@@ -6,7 +6,7 @@
 /*   By: jde-groo <jde-groo@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/09/13 14:53:22 by jde-groo      #+#    #+#                 */
-/*   Updated: 2022/11/08 22:10:32 by buiterma      ########   odam.nl         */
+/*   Updated: 2022/11/09 10:27:08 by buiterma      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,6 @@ static bool	single_builtin(void)
 static pid_t	exec(size_t i, int fd_in)
 {
 	int		fd[2];
-	pid_t	pid;
 
 	set_sigs_exec();
 	if (g_shell.cmd_n == 0)
@@ -76,26 +75,52 @@ static pid_t	exec(size_t i, int fd_in)
 		!g_shell.cmds[0].invalid && single_builtin())
 		return (0);
 	if (!ft_pipe(fd))
-		return (0);
-	if (!ft_fork(&pid))
+		return (false);
+	if (!ft_fork(&g_shell.pid))
 	{
 		close(fd[READ]);
 		close(fd[WRITE]);
-		return (0);
+		return (false);
 	}
-	if (pid == 0)
+	if (g_shell.pid == 0)
 	{
 		// dup2(fd[WRITE], STDOUT_FILENO);
+		close(fd[WRITE]);
 		close(fd[READ]);
 		ft_execve(i - 1);
 	}
-	// dup2(fd[READ], STDIN_FILENO);
-	close(fd_in);
-	close(fd[WRITE]);
-	if (i < g_shell.cmd_n)
-		pid = exec(i + 1, fd[READ]);
-	return (pid);
+	else
+	{
+		// dup2(fd[READ], STDIN_FILENO);
+		close(fd_in);
+		close(fd[WRITE]);
+		if (i < g_shell.cmd_n)
+			g_shell.pid = exec(i + 1, fd[READ]);
+	}
+	return (g_shell.pid);
 }
+
+	// if (!ft_pipe(fd))
+	// 	return (0);
+	// if (!ft_fork(&pid))
+	// {
+	// 	close(fd[READ]);
+	// 	close(fd[WRITE]);
+	// 	return (0);
+	// }
+	// if (pid == 0)
+	// {
+	// 	// dup2(fd[WRITE], STDOUT_FILENO);
+	// 	close(fd[READ]);
+	// 	ft_execve(i - 1);
+	// }
+	// // dup2(fd[READ], STDIN_FILENO);
+	// close(fd_in);
+	// close(fd[WRITE]);
+	// if (i < g_shell.cmd_n)
+	// 	pid = exec(i + 1, fd[READ]);
+	// return (pid);
+// }
 
 bool	exec_init(void)
 {
